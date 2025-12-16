@@ -1,9 +1,15 @@
 import os
+import sys
 import time
 import torch
 import torch.nn.functional as F
 import numpy as np
 import pandas as pd
+
+cur_dir = os.path.dirname(os.path.abspath(__file__))
+dllm_cache_dir = os.path.join(cur_dir, '../dLLM-cache')
+sys.path.append(dllm_cache_dir)
+from dllm_cache.cache import dLLMCache
 
 def add_gumbel_noise(logits, temperature):
     '''
@@ -35,7 +41,7 @@ def get_num_transfer_tokens(mask_index, steps):
 
 
 class ActivationProfiler:
-    def __init__(self, model, target_layers=['k_proj', 'v_proj', 'o_proj'], save_dir='../autodl-tmp/profiling_results'):
+    def __init__(self, model, target_layers, save_dir):
         self.model = model
         self.target_layers = target_layers
         self.hooks = []
@@ -97,9 +103,15 @@ def save_token_state(save_dir, step_idx, prompt_mask, mask_index, transfer_index
     torch.save(payload, os.path.join(step_dir, "token_state.pt"))
 
 
+def save_cache_state(save_dir, step_idx, cache_data):
+    """Persist dLLM-Cache state for later visualization."""
+    step_dir = os.path.join(save_dir, f"step_{step_idx}")
+    torch.save(cache_data, os.path.join(step_dir, "cache_state.pt"))
+
+
 @torch.no_grad()
 def profiled_generate(model, prompt, attention_mask=None, steps=128, gen_length=128, block_length=128, temperature=0.,
-             cfg_scale=0., remasking='low_confidence', mask_id=126336, logits_eos_inf=False, confidence_eos_eot_inf=False, profiler=None):
+             cfg_scale=0., remasking='low_confidence', mask_id=126336, logits_eos_inf=False, confidence_eos_eot_inf=False, profiler=None, with_dllm_cache=False):
     
     x = torch.full((prompt.shape[0], prompt.shape[1] + gen_length), mask_id, dtype=torch.long).to(model.device)
     x[:, :prompt.shape[1]] = prompt.clone()
@@ -203,6 +215,18 @@ def profiled_generate(model, prompt, attention_mask=None, steps=128, gen_length=
                     block_idx=num_block,
                     inblock_step=i,
                 )
+
+                if with_dllm_cache:
+                    cache = dLLMCache()
+                    cache_step = global_step + 1 # 1-based step index
+                    if hasattr(cache, 'step_logs') and cache_step in cache.step_logs:
+                        cache_data = cache.step_logs[cache_step]
+                        save_cache_state(
+                            save_dir=profiler.save_dir,
+                            step_idx=global_step,
+                            cache_data=cache_data,
+                        )
+                        del cache.step_logs[cache_step] # Clean up to avoid issues in next steps
             
             synchronize()
             t_remask_end = time.perf_counter()
@@ -223,7 +247,7 @@ def profiled_generate(model, prompt, attention_mask=None, steps=128, gen_length=
     return x, step_details
 
 
-def run_inference(model, tokenizer, prompt_text, steps=64, gen_length=64, block_length=32, profiler=None, device='cuda'):
+def run_inference(model, tokenizer, prompt_text, steps=64, gen_length=64, block_length=32, profiler=None, device='cuda', with_dllm_cache=False):
     """
     Runs inference and measures wall time with detailed profiling.
     """
@@ -234,6 +258,11 @@ def run_inference(model, tokenizer, prompt_text, steps=64, gen_length=64, block_
     input_ids = inputs['input_ids'].to(device)
     attention_mask = inputs['attention_mask'].to(device)
     
+    if with_dllm_cache:
+        cache = dLLMCache()
+        cache.reset_cache(input_ids.shape[1])
+        cache.step_logs = {}
+
     start_time = time.perf_counter()
     
     with torch.no_grad():
@@ -247,7 +276,8 @@ def run_inference(model, tokenizer, prompt_text, steps=64, gen_length=64, block_
             temperature=0., 
             cfg_scale=0., 
             remasking='low_confidence',
-            profiler=profiler
+            profiler=profiler,
+            with_dllm_cache=with_dllm_cache
         )
     
     end_time = time.perf_counter()

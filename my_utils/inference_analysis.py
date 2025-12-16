@@ -6,9 +6,11 @@ import torch.nn.functional as F
 import pandas as pd
 import numpy as np
 
+
 _layer_re = re.compile(
     r".*_(?:layers|transformer_blocks)_(\d+).*_(q_proj|k_proj|v_proj|attn_out|ff_proj|up_proj|ff_out)\.pt$"
 )
+
 
 def load_token_state(base_dir, step):
     """Load token state data for a specific step."""
@@ -17,6 +19,7 @@ def load_token_state(base_dir, step):
     if os.path.exists(token_state_path):
         return torch.load(token_state_path, map_location="cpu")
     return None
+
 
 def collect_token_evolution(base_dir, steps=None):
     """
@@ -65,6 +68,7 @@ def collect_token_evolution(base_dir, steps=None):
     
     return pd.DataFrame(rows)
 
+
 def analyze_token_transitions(df_tokens):
     """Analyze how tokens transition between states."""
     transitions = []
@@ -83,6 +87,7 @@ def analyze_token_transitions(df_tokens):
                 })
             prev_state = current_state
     return pd.DataFrame(transitions)
+
 
 def get_token_coverage_stats(df_tokens):
     """Get statistics about token coverage at each step."""
@@ -109,6 +114,7 @@ def get_token_coverage_stats(df_tokens):
         })
     return pd.DataFrame(coverage_stats)
 
+
 def load_step_tensors(base_dir, step, selector_substrings):
     step_dir = os.path.join(base_dir, f"step_{step}")
     tensors = {}
@@ -120,6 +126,7 @@ def load_step_tensors(base_dir, step, selector_substrings):
             tensors[base] = torch.load(f, map_location="cpu")
     return tensors
 
+
 def parse_layer_and_kind(layer_file_basename):
     m = _layer_re.match(layer_file_basename)
     if m:
@@ -128,6 +135,7 @@ def parse_layer_and_kind(layer_file_basename):
         if k in layer_file_basename:
             return None, k
     return None, None
+
 
 def reduce_stat(t, how="mean_abs", sample=None):
     x = t
@@ -148,6 +156,44 @@ def reduce_stat(t, how="mean_abs", sample=None):
         return x.pow(2).mean().sqrt().item()
     raise ValueError(how)
 
+
+def collect_cache_evolution(base_dir):
+    rows = []
+    if not os.path.exists(base_dir):
+        return pd.DataFrame()
+        
+    step_dirs = sorted([d for d in os.listdir(base_dir) if d.startswith("step_")],
+                       key=lambda x: int(x.split('_')[1]))
+    
+    for d in step_dirs:
+        step = int(d.split('_')[1])
+        file_path = os.path.join(base_dir, d, "cache_state.pt")
+        if not os.path.exists(file_path):
+            continue
+            
+        try:
+            cache_data = torch.load(file_path, map_location='cpu')
+        except Exception as e:
+            print(f"Error loading {file_path}: {e}")
+            continue
+            
+        for layer_id, data in cache_data.items():
+            transfer_idx = data.get('transfer_index')
+            transfer_count = transfer_idx.numel() if transfer_idx is not None and isinstance(transfer_idx, torch.Tensor) else 0
+            
+            rows.append({
+                'step': step,
+                'layer_id': layer_id,
+                'refresh_gen': data.get('refresh_gen', False),
+                'refresh_prompt': data.get('refresh_prompt', False),
+                'transfer': data.get('transfer', False),
+                'transfer_count': transfer_count,
+                'transfer_index': transfer_idx if transfer_idx is not None else None,
+            })
+
+    return pd.DataFrame(rows)
+
+
 def collect_series(base_dir, selectors=('q_proj','k_proj'), how="mean_abs", sample=None, steps=None):
     rows = []
     if steps is None:
@@ -164,6 +210,7 @@ def collect_series(base_dir, selectors=('q_proj','k_proj'), how="mean_abs", samp
             rows.append({"step": step, "layer_idx": layer_idx, "kind": kind, "value": val, "name": name})
     return pd.DataFrame(rows)
 
+
 def flatten_activation(t, mode="batch_seq_mean"):
     x = t.float()
     if mode == "batch_seq_mean":
@@ -174,6 +221,7 @@ def flatten_activation(t, mode="batch_seq_mean"):
         return x.reshape(-1, x.size(-1))
     raise ValueError(mode)
 
+
 def _token_matrix(x):
     x = x.float()
     if x.ndim == 2:
@@ -181,6 +229,7 @@ def _token_matrix(x):
     if x.ndim == 3:
         return x.view(-1, x.size(-1))
     raise ValueError(f"Unsupported tensor shape {tuple(x.shape)} for token-wise mode")
+
 
 def cosine_similarity_tensors(t_a, t_b, mode="batch_seq_mean"):
     if mode == "token-wise":
@@ -202,6 +251,7 @@ def cosine_similarity_tensors(t_a, t_b, mode="batch_seq_mean"):
         return sims.mean().item()
     else:
         raise ValueError(mode)
+
 
 def collect_similarity_for_pairs(base_dir, step_pairs, selector="attn_out", tensor_names=None, mode="batch_seq_mean"):
     rows = []
@@ -225,6 +275,7 @@ def collect_similarity_for_pairs(base_dir, step_pairs, selector="attn_out", tens
                 "similarity": sim,
             })
     return pd.DataFrame(rows)
+
 
 def expand_tokenwise_similarity(df_sim):
     rows = []
