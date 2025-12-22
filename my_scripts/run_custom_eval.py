@@ -11,6 +11,7 @@ from my_utils.eval_common import load_model_and_tokenizer, load_dataset_shard
 from my_utils.run_inference import profiled_generate
 from dllm_cache.cache import dLLMCache
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Run LLaDA evaluation.")
     parser.add_argument('--model_path', type=str, default='GSAI-ML/LLaDA-8B-Instruct')
@@ -35,6 +36,7 @@ def parse_args():
     parser.add_argument('--cache_transfer_ratio', type=float, default=0.25)
     
     return parser.parse_args()
+
 
 def main():
     args = parse_args()
@@ -74,13 +76,15 @@ def main():
             task_id = sample['task_id']
             prompt_text = sample['prompt']
         elif args.dataset_name == 'gsm8k':
-             # Placeholder for GSM8K
-             task_id = "unknown"
-             prompt_text = sample.get('question', '')
+             task_id = f"GSM8K/{sample['global_index']}"
+             # Standard zero-shot prompt for GSM8K
+             prompt_text = f"Question: {sample['question']}\nAnswer:"
+        elif args.dataset_name == 'mmlu':
+            task_id = f"MMLU/{sample['global_index']}"
+            choices_str = "\n".join([f"{chr(65+i)}. {choice}" for i, choice in enumerate(sample['choices'])])
+            prompt_text = f"Question: {sample['question']}\nChoices:\n{choices_str}\nAnswer:"
         else:
-             # Default fallback
-             task_id = sample.get('id', 'unknown')
-             prompt_text = sample.get('prompt', '')
+            raise ValueError(f"Unsupported dataset: {args.dataset_name}")
         
         batch_data.append({"task_id": task_id, "prompt_text": prompt_text})
         
@@ -91,6 +95,7 @@ def main():
     # Process remaining
     if batch_data:
         process_batch(batch_data, model, tokenizer, args, output_file)
+
 
 def process_batch(batch_data, model, tokenizer, args, output_file):
     prompts = [item['prompt_text'] for item in batch_data]
@@ -132,6 +137,7 @@ def process_batch(batch_data, model, tokenizer, args, output_file):
         
         with open(output_file, 'a') as f:
             f.write(json.dumps(result_entry) + "\n")
+
 
 if __name__ == "__main__":
     main()

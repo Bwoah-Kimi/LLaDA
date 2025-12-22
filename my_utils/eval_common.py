@@ -41,7 +41,17 @@ def load_model_and_tokenizer(model_path, cache_dir, device='cuda', enable_dllm_c
 def load_dataset_shard(dataset_name, dataset_path, split, shard_id, num_shards):
     from datasets import load_dataset
     print(f"Loading {dataset_name} dataset from {dataset_path}...")
-    ds = load_dataset(path=dataset_path, split=split)
+    
+    try:
+        # Try loading with default config
+        ds = load_dataset(path=dataset_path, split=split)
+    except:
+        # Fallback for GSM8K which often needs 'main'
+        ds = load_dataset(path=dataset_path, name="main", split=split)
+    
+    # Add global index to track samples across shards
+    if 'global_index' not in ds.column_names:
+        ds = ds.map(lambda _, idx: {'global_index': idx}, with_indices=True)
     
     if num_shards > 1:
         ds = ds.shard(num_shards=num_shards, index=shard_id)

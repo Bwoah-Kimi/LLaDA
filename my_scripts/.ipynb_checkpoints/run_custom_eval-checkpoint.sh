@@ -11,9 +11,9 @@ NUM_SHARDS=1  # Set to 1 to avoid OOM if using single GPU
 BATCH_SIZE=8  # Increase batch size to accelerate
 
 # Sweep Parameters
-GEN_LENGTH_LIST=(256)
-STEPS_LIST=(256)
-BLOCK_SIZES=(16 32 64 128 256)
+GEN_LENGTH_LIST=(512 1024)
+STEPS_LIST=(512)
+BLOCK_SIZES=(32 64)
 CACHE_ENABLED=false
 
 for gen_length in "${GEN_LENGTH_LIST[@]}"; do
