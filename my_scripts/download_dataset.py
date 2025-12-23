@@ -3,7 +3,7 @@ os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
 os.environ['HF_HOME'] = '/root/LLaDA/hf_models/'
 from datasets import load_dataset
 
-BENCHMARK_NAME = "mmlu"
+BENCHMARK_NAME = "wikitext"
 
 if BENCHMARK_NAME == "humaneval":
     print("Loading HumanEval dataset...")
@@ -14,6 +14,9 @@ elif BENCHMARK_NAME == "gsm8k":
 elif BENCHMARK_NAME == 'mmlu':
     print("Loading MMLU dataset...")
     ds = load_dataset("cais/mmlu", "all", split="test")
+elif BENCHMARK_NAME == 'wikitext':
+    print("Loading Wikitext-2 dataset...")
+    ds = load_dataset("wikitext", "wikitext-2-raw-v1", split="test")
 else:
     raise ValueError(f"Unsupported benchmark: {BENCHMARK_NAME}")
 print(f"Loaded {len(ds)} problems.")
@@ -26,3 +29,5 @@ elif BENCHMARK_NAME == "gsm8k":
     print(ds[0]['question'])
 elif BENCHMARK_NAME == "mmlu":
     print(f"Question: {ds[0]['question']}\nChoices: {ds[0]['choices']}\nAnswer: {ds[0]['answer']}")
+elif BENCHMARK_NAME == "wikitext":
+    print(ds[3]['text'])
