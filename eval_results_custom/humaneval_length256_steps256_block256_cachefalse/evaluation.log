@@ -1,0 +1,7 @@
+Loading dataset from /root/LLaDA/hf_models/datasets/openai_humaneval...
+Evaluating 164 samples...
+------------------------------
+Total Evaluated: 164
+Passed: 22
+Pass@1: 0.1341
+------------------------------

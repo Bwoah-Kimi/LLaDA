@@ -1,0 +1,68 @@
+Loading model from GSAI-ML/LLaDA-8B-Instruct (cache: /root/LLaDA/hf_models/hub)...
+Loading checkpoint shards:   0%|                                                                                                                                                                              | 0/6 [00:00<?, ?it/s]Loading checkpoint shards:  17%|███████████████████████████▋                                                                                                                                          | 1/6 [00:00<00:00,  8.94it/s]Loading checkpoint shards:  67%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                       | 4/6 [00:00<00:00, 16.96it/s]Loading checkpoint shards: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 6/6 [00:00<00:00, 17.73it/s]
+Loading humaneval dataset from /root/LLaDA/hf_models/datasets/openai_humaneval...
+Loaded full dataset with 164 samples.
+Shard 0:   0%|                                                                                                                                                                                              | 0/164 [00:00<?, ?it/s]Shard 0:   5%|████████▊                                                                                                                                                                           | 8/164 [03:53<1:16:01, 29.24s/it]Shard 0:  10%|█████████████████▍                                                                                                                                                                 | 16/164 [08:16<1:17:16, 31.33s/it]Shard 0:  15%|██████████████████████████▏                                                                                                                                                        | 24/164 [12:45<1:15:33, 32.39s/it]Shard 0:  20%|██████████████████████████████████▉                                                                                                                                                | 32/164 [16:45<1:09:09, 31.44s/it]Shard 0:  24%|███████████████████████████████████████████▋                                                                                                                                       | 40/164 [22:18<1:12:35, 35.13s/it]Shard 0:  29%|████████████████████████████████████████████████████▍                                                                                                                              | 48/164 [26:41<1:06:26, 34.37s/it]Shard 0:  34%|█████████████████████████████████████████████████████████████▊                                                                                                                       | 56/164 [30:43<59:23, 33.00s/it]Shard 0:  39%|██████████████████████████████████████████████████████████████████████▋                                                                                                              | 64/164 [35:00<54:32, 32.73s/it]Shard 0:  44%|███████████████████████████████████████████████████████████████████████████████▍                                                                                                     | 72/164 [41:20<57:17, 37.36s/it]Shard 0:  49%|████████████████████████████████████████████████████████████████████████████████████████▎                                                                                            | 80/164 [47:34<56:20, 40.24s/it]Shard 0:  54%|█████████████████████████████████████████████████████████████████████████████████████████████████                                                                                    | 88/164 [53:26<52:27, 41.41s/it]Shard 0:  59%|█████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                                                           | 96/164 [59:40<48:45, 43.03s/it]Shard 0:  63%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                                                 | 104/164 [1:04:02<39:55, 39.92s/it]Shard 0:  68%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                                        | 112/164 [1:10:12<36:14, 41.81s/it]Shard 0:  73%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                               | 120/164 [1:16:33<31:57, 43.59s/it]Shard 0:  78%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                       | 128/164 [1:22:28<26:17, 43.81s/it]Shard 0:  83%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                              | 136/164 [1:29:46<21:58, 47.08s/it]Shard 0:  88%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                     | 144/164 [1:34:43<14:41, 44.09s/it]Shard 0:  93%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉             | 152/164 [1:39:39<08:23, 41.99s/it]Shard 0:  98%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋    | 160/164 [1:45:47<02:52, 43.19s/it]Shard 0: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 164/164 [1:45:47<00:00, 38.71s/it]
+Generation length: 256
+Denoising steps per block: 256
+Number of blocks: 1
+Generation length: 256
+Denoising steps per block: 256
+Number of blocks: 1
+Generation length: 256
+Denoising steps per block: 256
+Number of blocks: 1
+Generation length: 256
+Denoising steps per block: 256
+Number of blocks: 1
+Generation length: 256
+Denoising steps per block: 256
+Number of blocks: 1
+Generation length: 256
+Denoising steps per block: 256
+Number of blocks: 1
+Generation length: 256
+Denoising steps per block: 256
+Number of blocks: 1
+Generation length: 256
+Denoising steps per block: 256
+Number of blocks: 1
+Generation length: 256
+Denoising steps per block: 256
+Number of blocks: 1
+Generation length: 256
+Denoising steps per block: 256
+Number of blocks: 1
+Generation length: 256
+Denoising steps per block: 256
+Number of blocks: 1
+Generation length: 256
+Denoising steps per block: 256
+Number of blocks: 1
+Generation length: 256
+Denoising steps per block: 256
+Number of blocks: 1
+Generation length: 256
+Denoising steps per block: 256
+Number of blocks: 1
+Generation length: 256
+Denoising steps per block: 256
+Number of blocks: 1
+Generation length: 256
+Denoising steps per block: 256
+Number of blocks: 1
+Generation length: 256
+Denoising steps per block: 256
+Number of blocks: 1
+Generation length: 256
+Denoising steps per block: 256
+Number of blocks: 1
+Generation length: 256
+Denoising steps per block: 256
+Number of blocks: 1
+Generation length: 256
+Denoising steps per block: 256
+Number of blocks: 1
+Generation length: 256
+Denoising steps per block: 256
+Number of blocks: 1
