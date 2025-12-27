@@ -5,10 +5,11 @@ import json
 import torch
 from tqdm import tqdm
 
-# Add path to import my_utils
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from my_utils.eval_common import load_model_and_tokenizer, load_dataset_shard
 from my_utils.run_inference import profiled_generate
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../dLLM-cache')))
 from dllm_cache.cache import dLLMCache
 
 
@@ -31,10 +32,11 @@ def parse_args():
     
     # dLLM Cache params
     parser.add_argument('--enable_dllm_cache', action='store_true')
-    parser.add_argument('--cache_prompt_interval', type=int, default=100)
+    parser.add_argument('--cache_prompt_interval', type=int, default=50)
     parser.add_argument('--cache_gen_interval', type=int, default=7)
     parser.add_argument('--cache_transfer_ratio', type=float, default=0.25)
-    
+    parser.add_argument('--cache_similarity_threshold', type=float, default=None)
+    parser.add_argument('--cache_strategy', type=str, default='ratio')
     return parser.parse_args()
 
 
@@ -44,7 +46,9 @@ def main():
     cache_config = {
         'prompt_interval_steps': args.cache_prompt_interval,
         'gen_interval_steps': args.cache_gen_interval,
-        'transfer_ratio': args.cache_transfer_ratio
+        'transfer_ratio': args.cache_transfer_ratio,
+        'similarity_threshold': args.cache_similarity_threshold,
+        'cache_strategy': args.cache_strategy,
     }
     
     model, tokenizer = load_model_and_tokenizer(

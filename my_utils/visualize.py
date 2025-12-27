@@ -346,6 +346,121 @@ def plot_layer_token_evolution(df_cache, layer_ids):
         plt.show()
 
 
+def plot_similarity_heatmap(df_tok, step_pair_str, t_name, block_boundaries, prompt_len, seq_len, ax_heatmap, show_x_label=True):
+    """Helper function to plot a single similarity heatmap."""
+    # Pivot for heatmap
+    pivot = (
+        df_tok.pivot_table(index="layer_idx", columns="token_idx", values="token_similarity", aggfunc="mean")
+        .sort_index()
+    )
+    
+    im = ax_heatmap.imshow(
+        pivot.values,
+        cmap="coolwarm",
+        vmin=0,
+        vmax=1,
+        aspect='auto',
+        interpolation='nearest'
+    )
+    
+    # Add boundaries
+    for boundary in block_boundaries:
+        if boundary < seq_len:
+            ax_heatmap.axvline(x=boundary-0.5, color='black', linestyle='-', linewidth=2, alpha=0.7)
+    ax_heatmap.axvline(x=prompt_len-0.5, color='purple', linestyle='-', linewidth=3, alpha=0.8)
+    
+    ax_heatmap.set_title(f"{step_pair_str}: {t_name} Cosine Similarity")
+    ax_heatmap.set_ylabel("Layer Index")
+    
+    if not show_x_label:
+        ax_heatmap.set_xticks([])
+    else:
+        ax_heatmap.set_xlabel("Token Index")
+
+    if len(pivot.index) <= 20:
+        ax_heatmap.set_yticks(range(len(pivot.index)))
+        ax_heatmap.set_yticklabels(pivot.index)
+    
+    plt.colorbar(im, ax=ax_heatmap, label="Sim")
+
+
+def plot_token_state_strips(token_states_a, token_states_b, block_idx_a, block_idx_b, step_pair_str, ax_state_a, ax_state_b):
+    """Helper function to plot token state strips."""
+    # Plot State Strips
+    state_colors = {'prompt': 0, 'masked': 1, 'transferred': 2, 'generated': 3, 'unknown': 4}
+    
+    # State A
+    state_array_a = [state_colors.get(state, 4) for state in token_states_a]
+    ax_state_a.imshow([state_array_a], cmap=plt.cm.Set3, aspect='auto', interpolation='nearest', vmin=0, vmax=11)
+    ax_state_a.set_title(f"Token States at Step {step_pair_str.split('→')[0]} (Block {block_idx_a})")
+    ax_state_a.set_yticks([])
+    ax_state_a.set_xticks([]) 
+    
+    # State B
+    state_array_b = [state_colors.get(state, 4) for state in token_states_b]
+    ax_state_b.imshow([state_array_b], cmap=plt.cm.Set3, aspect='auto', interpolation='nearest', vmin=0, vmax=11)
+    ax_state_b.set_title(f"Token States at Step {step_pair_str.split('→')[1]} (Block {block_idx_b})")
+    ax_state_b.set_xlabel("Token Index")
+    ax_state_b.set_yticks([])
+    
+    # Legend        
+    legend_elements = [
+        Patch(facecolor=plt.cm.Set3(0), label='Prompt'),
+        Patch(facecolor=plt.cm.Set3(1), label='Masked'),
+        Patch(facecolor=plt.cm.Set3(2), label='Transferred'),
+        Patch(facecolor=plt.cm.Set3(3), label='Generated')
+    ]
+    ax_state_b.legend(handles=legend_elements, loc='center left', bbox_to_anchor=(1, 0.5))
+
+
+def analyze_similarity_statistics(full_df, save_dir=None):
+    """Performs detailed statistical analysis on similarity data."""
+    print("\n" + "="*80)
+    print("Cosine Similarity Distribution Analysis")
+    print("="*80)
+    
+    percentiles = [0.1, 0.25, 0.5, 0.75, 0.9]
+    
+    if save_dir:
+        os.makedirs(save_dir, exist_ok=True)
+    
+    for t_type in full_df['tensor_type'].unique():
+        subset = full_df[full_df['tensor_type'] == t_type].copy()
+        print(f"\nTensor Type: {t_type}")
+        print(f"Total data points: {len(subset)}")
+        
+        # 1. Global Statistics
+        print("\n--- Global Statistics ---")
+        stats = subset['token_similarity'].quantile(percentiles)
+        print(f"{'Percentile':<12} | {'Similarity':<12}")
+        print("-" * 30)
+        for p in percentiles:
+            print(f"{p*100:>5.1f}%       | {stats[p]:.4f}")
+
+        # 2. Evolution over Steps (Step Pairs)
+        print("\n--- Evolution over Steps (Median Similarity) ---")
+        # Extract step number from step_pair string "X→Y" -> X
+        subset['step_num'] = subset['step_pair'].apply(lambda x: int(x.split('→')[0]))
+        step_stats = subset.groupby('step_num')['token_similarity'].quantile(percentiles).unstack()
+        print(step_stats.round(4))
+
+        # 3. Evolution over Layers
+        print("\n--- Evolution over Layers (Median Similarity) ---")
+        layer_stats = subset.groupby('layer_idx')['token_similarity'].quantile(percentiles).unstack()
+        print(layer_stats.round(4))
+        
+        # Optional: Heatmap of Median Similarity (Layer vs Step)
+        print("\n--- Median Similarity Matrix (Layer vs Step) ---")
+        pivot_median = subset.pivot_table(index='layer_idx', columns='step_num', values='token_similarity', aggfunc='median')
+        print(pivot_median.round(3))
+        
+        if save_dir:
+            print(f"\nSaving statistics to {save_dir}...")
+            step_stats.to_csv(os.path.join(save_dir, f'{t_type}_similarity_by_step.csv'))
+            layer_stats.to_csv(os.path.join(save_dir, f'{t_type}_similarity_by_layer.csv'))
+            pivot_median.to_csv(os.path.join(save_dir, f'{t_type}_similarity_matrix.csv'))
+
+
 def enhanced_cosine_similarity_with_full_evolution(df_token_evolution, tensor_dir, step_pairs, tensor_name, show_fig=True, save_dir=None):
     """
     Analyze cosine similarity using the pre-computed token evolution DataFrame.
@@ -383,8 +498,8 @@ def enhanced_cosine_similarity_with_full_evolution(df_token_evolution, tensor_di
     # Handle single string or list input
     target_tensors = [tensor_name] if isinstance(tensor_name, str) else tensor_name
 
-    # Pre-fetch data for all tensors to avoid re-reading inside the loop if possible,
-    # or just iterate step pairs first.
+    # Accumulator for statistics
+    all_similarity_records = []
     
     for step_pair_tuple in step_pairs:
         step_a, step_b = step_pair_tuple
@@ -397,33 +512,20 @@ def enhanced_cosine_similarity_with_full_evolution(df_token_evolution, tensor_di
             print(f"Missing token states for steps {step_a} or {step_b}")
             continue
 
-        # Calculate layout: 
-        # For N tensors, we need N heatmaps + 2 state strips (top and bottom)
-        # Actually, usually we want:
-        # [Tensor 1 Heatmap]
-        # [Tensor 2 Heatmap]
-        # ...
-        # [State Strip A]
-        # [State Strip B]
-        
         n_tensors = len(target_tensors)
-        # Height ratios: Heatmaps get 3 units, State strips get 0.2 units
         height_ratios = [3] * n_tensors + [0.2, 0.2]
-        total_height = 4 * n_tensors + 2 # Adjust figure height based on number of tensors
+        total_height = 4 * n_tensors + 2 
         
         fig, axes = plt.subplots(n_tensors + 2, 1, figsize=(15, total_height), 
                                 gridspec_kw={'height_ratios': height_ratios})
         
-        # If only 1 tensor, axes is a list of 3. If multiple, it's length N+2.
-        # Let's ensure axes is indexable
-        if n_tensors + 2 == 1: axes = [axes]
+        # Ensure axes is always a list/array even if n_tensors=1 (total=3)
+        if not isinstance(axes, (list, np.ndarray)):
+            axes = [axes]
         
-        # Plot Heatmaps for each tensor
         for idx, t_name in enumerate(target_tensors):
             ax = axes[idx]
             
-            # Collect similarity for this specific tensor and step pair
-            # Note: collect_similarity_for_pairs expects a list of pairs
             df_sim = collect_similarity_for_pairs(
                 tensor_dir,
                 [step_pair_tuple],
@@ -441,78 +543,36 @@ def enhanced_cosine_similarity_with_full_evolution(df_token_evolution, tensor_di
                 if df_tok.empty:
                     ax.text(0.5, 0.5, f"No token-wise data for {t_name}", ha='center', va='center')
                     continue
-                
-                # Pivot for heatmap
-                pivot = (
-                    df_tok.pivot_table(index="layer_idx", columns="token_idx", values="token_similarity", aggfunc="mean")
-                    .sort_index()
-                )
-                
-                im = ax.imshow(
-                    pivot.values,
-                    cmap="coolwarm",
-                    vmin=0,
-                    vmax=1,
-                    aspect='auto',
-                    interpolation='nearest'
-                )
-                
-                # Add boundaries
-                for boundary in block_boundaries:
-                    if boundary < seq_len:
-                        ax.axvline(x=boundary-0.5, color='black', linestyle='-', linewidth=2, alpha=0.7)
-                ax.axvline(x=prompt_len-0.5, color='purple', linestyle='-', linewidth=3, alpha=0.8)
-                
-                ax.set_title(f"{step_pair_str}: {t_name} Cosine Similarity")
-                ax.set_ylabel("Layer Index")
-                
-                # Only show x-labels on the last heatmap
-                if idx < n_tensors - 1:
-                    ax.set_xticks([])
-                else:
-                    ax.set_xlabel("Token Index")
 
-                if len(pivot.index) <= 20:
-                    ax.set_yticks(range(len(pivot.index)))
-                    ax.set_yticklabels(pivot.index)
+                # Collect data for statistics
+                df_tok['tensor_type'] = t_name
+                all_similarity_records.append(df_tok)
                 
-                plt.colorbar(im, ax=ax, label="Sim")
+                # Use helper function for plotting heatmap only
+                plot_similarity_heatmap(
+                    df_tok, step_pair_str, t_name, block_boundaries, prompt_len, seq_len,
+                    ax, show_x_label=(idx == n_tensors - 1)
+                )
 
-        # Plot State Strips (shared for all tensors in this step pair)
-        ax_state_a = axes[-2]
-        ax_state_b = axes[-1]
-        
-        state_colors = {'prompt': 0, 'masked': 1, 'transferred': 2, 'generated': 3, 'unknown': 4}
-        
-        # State A
-        state_array_a = [state_colors.get(state, 4) for state in token_states_a]
-        ax_state_a.imshow([state_array_a], cmap=plt.cm.Set3, aspect='auto', interpolation='nearest', vmin=0, vmax=11)
-        ax_state_a.set_title(f"Token States at Step {step_a} (Block {block_idx_a})")
-        ax_state_a.set_yticks([])
-        ax_state_a.set_xticks([]) 
-        
-        # State B
-        state_array_b = [state_colors.get(state, 4) for state in token_states_b]
-        ax_state_b.imshow([state_array_b], cmap=plt.cm.Set3, aspect='auto', interpolation='nearest', vmin=0, vmax=11)
-        ax_state_b.set_title(f"Token States at Step {step_b} (Block {block_idx_b})")
-        ax_state_b.set_xlabel("Token Index")
-        ax_state_b.set_yticks([])
-        
-        # Legend        
-        legend_elements = [
-            Patch(facecolor=plt.cm.Set3(0), label='Prompt'),
-            Patch(facecolor=plt.cm.Set3(1), label='Masked'),
-            Patch(facecolor=plt.cm.Set3(2), label='Transferred'),
-            Patch(facecolor=plt.cm.Set3(3), label='Generated')
-        ]
-        # Add legend
-        ax_state_b.legend(handles=legend_elements, loc='center left', bbox_to_anchor=(1, 0.5))
-        # ax3.legend(handles=legend_elements, loc='center left', bbox_to_anchor=(1, 0.5))
-        
+        # Plot state strips once at the bottom
+        plot_token_state_strips(
+            token_states_a, token_states_b, block_idx_a, block_idx_b, 
+            step_pair_str, axes[-2], axes[-1]
+        )
+
         plt.tight_layout()
-        if show_fig:
-            plt.show()
         if save_dir is not None:
-            # Save plot to save_dir
             fig_path = os.path.join(save_dir, f"cosine_similarity_{step_pair_str.replace('→', '_to_')}.png")
             fig.savefig(fig_path)
+            plt.close(fig)
+        
+        # Show figure if required
+        if show_fig:
+            plt.show()
+        else:
+            plt.close(fig)
+        
+    # --- Statistical Analysis ---
+    if all_similarity_records:
+        full_df = pd.concat(all_similarity_records, ignore_index=True)
+        analyze_similarity_statistics(full_df, save_dir=save_dir)
