@@ -130,13 +130,30 @@ def refresh_index(
     new_features: torch.Tensor,
     cached_features: torch.Tensor = None,
     transfer_ratio: float = 0.5,
+    similarity_threshold: Optional[float] = None,
+    cache_strategy: str = "ratio",
     layer_id: int = 0,
 ) -> torch.Tensor:
     batch_size, gen_len, d_model = new_features.shape
-    num_replace = int(gen_len * transfer_ratio)
+
+    # num_replace = int(gen_len * transfer_ratio)
     cos_sim = torch.nn.functional.cosine_similarity(
         new_features, cached_features, dim=-1
     )
+
+    if cache_strategy == "threshold" and similarity_threshold is not None:
+        # Calculate how many tokens are below the threshold
+        mask = cos_sim < similarity_threshold
+        num_replace = mask.sum(dim=-1).max().int().item()
+    elif cache_strategy == 'ratio':
+        num_replace = int(gen_len * transfer_ratio)
+    else:
+        raise ValueError(f"Invalid cache_strategy: {cache_strategy}")
+    
+    # Ensure num_replace is within bounds
+    num_replace = max(0, min(gen_len, num_replace))
+
+    # Select the indices with the lowest cosine similarity
     transfer_index = torch.topk(cos_sim, largest=False, k=num_replace).indices
     return transfer_index
 
@@ -155,9 +172,18 @@ def cache_hook_feature(
     x_gen = x[:, prompt_length:, :]
     refresh_gen = feature_cache.refresh_gen(layer_id=self.layer_id) or self.layer_id == 0
     refresh_prompt = feature_cache.refresh_prompt(layer_id=self.layer_id) or self.layer_id == 0
+
     transfer_ratio = feature_cache.transfer_ratio
+    similarity_threshold = feature_cache.similarity_threshold
+    cache_strategy = getattr(feature_cache, "cache_strategy", "ratio")
+    
     bs, seq_len, dim = x.shape
-    transfer = transfer_ratio > 0 and transfer_ratio <= 1
+
+    # Determine if transfer is active based on strategy
+    if cache_strategy == "threshold":
+        transfer = similarity_threshold > 0 and similarity_threshold < 1
+    else:
+        transfer = transfer_ratio > 0 and transfer_ratio <= 1
 
     # Initialize transfer_index to None
     transfer_index = None
@@ -284,7 +310,12 @@ def cache_hook_feature(
             x_gen_normed = self.attn_norm(x_gen)
             v_gen = self.v_proj(x_gen_normed)
             index = refresh_index(
-                v_gen, kv_cache_gen["v"], transfer_ratio, self.layer_id
+                new_features=v_gen,
+                cached_features=kv_cache_gen["v"],
+                transfer_ratio=transfer_ratio,
+                similarity_threshold=similarity_threshold,
+                cache_strategy=cache_strategy,
+                layer_id=self.layer_id
             )
             transfer_index = index.detach().cpu()
             index_expanded = index.unsqueeze(-1).expand(-1, -1, dim)
@@ -339,6 +370,7 @@ def cache_hook_feature(
             cache_type="prompt",
         )
         att = torch.cat([att_prompt, att_gen_cache], dim=1)
+    
     else:
         att_gen_cache = feature_cache.get_cache(
             layer_id=self.layer_id, feature_name="attn", cache_type="gen"
@@ -353,7 +385,12 @@ def cache_hook_feature(
                 layer_id=self.layer_id, feature_name="kv_cache", cache_type="prompt"
             )
             index = refresh_index(
-                v_gen, kv_cache_gen["v"], transfer_ratio, self.layer_id
+                new_features=v_gen,
+                cached_features=kv_cache_gen["v"],
+                transfer_ratio=transfer_ratio,
+                similarity_threshold=similarity_threshold,
+                cache_strategy=cache_strategy,
+                layer_id=self.layer_id
             )
             transfer_index = index.detach().cpu()
             index_expanded = index.unsqueeze(-1).expand(-1, -1, dim)
