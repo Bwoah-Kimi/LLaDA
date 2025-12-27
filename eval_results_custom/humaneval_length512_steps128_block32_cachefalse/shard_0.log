@@ -1,0 +1,5 @@
+Loading model from GSAI-ML/LLaDA-8B-Instruct (cache: /root/LLaDA/hf_models/hub)...
+Loading checkpoint shards:   0%|          | 0/6 [00:00<?, ?it/s]Loading checkpoint shards:  17%|█▋        | 1/6 [00:00<00:00,  8.22it/s]Loading checkpoint shards:  50%|█████     | 3/6 [00:00<00:00, 13.21it/s]Loading checkpoint shards:  83%|████████▎ | 5/6 [00:00<00:00, 15.03it/s]Loading checkpoint shards: 100%|██████████| 6/6 [00:00<00:00, 14.66it/s]
+Loading humaneval dataset from /root/LLaDA/hf_models/datasets/openai_humaneval...
+Loaded full dataset with 164 samples.
+Shard 0:   0%|          | 0/164 [00:00<?, ?it/s]Shard 0:   1%|          | 1/164 [00:10<27:51, 10.26s/it]Shard 0:   1%|          | 2/164 [00:20<27:00, 10.00s/it]

@@ -1,0 +1,129 @@
+Loading model from GSAI-ML/LLaDA-8B-Instruct (cache: /root/LLaDA/hf_models/hub)...
+Loading checkpoint shards:   0%|          | 0/6 [00:00<?, ?it/s]Loading checkpoint shards:  17%|█▋        | 1/6 [00:00<00:00,  7.46it/s]Loading checkpoint shards:  50%|█████     | 3/6 [00:00<00:00, 11.43it/s]Loading checkpoint shards:  83%|████████▎ | 5/6 [00:00<00:00, 13.21it/s]Loading checkpoint shards: 100%|██████████| 6/6 [00:00<00:00, 12.59it/s]
+dLLM-Cache enabled with config: dLLMCacheConfig(prompt_interval_steps=50, gen_interval_steps=7, transfer_ratio=0.25, cfg_interval_steps=1, similarity_threshold=0.9, cache_strategy='ratio')
+Loading humaneval dataset from /root/LLaDA/hf_models/datasets/openai_humaneval...
+Loaded full dataset with 164 samples.
+Shard 0:   0%|          | 0/164 [00:00<?, ?it/s]Shard 0:   2%|▏         | 4/164 [00:11<07:21,  2.76s/it]Shard 0:   5%|▍         | 8/164 [00:21<06:59,  2.69s/it]Shard 0:   7%|▋         | 12/164 [00:32<06:50,  2.70s/it]Shard 0:  10%|▉         | 16/164 [00:42<06:35,  2.67s/it]Shard 0:  12%|█▏        | 20/164 [00:53<06:28,  2.70s/it]Shard 0:  15%|█▍        | 24/164 [01:04<06:17,  2.69s/it]Shard 0:  17%|█▋        | 28/164 [01:15<06:05,  2.69s/it]Shard 0:  20%|█▉        | 32/164 [01:25<05:51,  2.66s/it]Shard 0:  22%|██▏       | 36/164 [01:37<05:50,  2.74s/it]Shard 0:  24%|██▍       | 40/164 [01:48<05:38,  2.73s/it]Shard 0:  27%|██▋       | 44/164 [01:59<05:26,  2.72s/it]Shard 0:  29%|██▉       | 48/164 [02:09<05:13,  2.71s/it]Shard 0:  32%|███▏      | 52/164 [02:20<05:01,  2.69s/it]Shard 0:  34%|███▍      | 56/164 [02:30<04:48,  2.67s/it]Shard 0:  37%|███▋      | 60/164 [02:41<04:35,  2.65s/it]Shard 0:  39%|███▉      | 64/164 [02:52<04:25,  2.66s/it]Shard 0:  41%|████▏     | 68/164 [03:03<04:20,  2.71s/it]Shard 0:  44%|████▍     | 72/164 [03:15<04:20,  2.83s/it]Shard 0:  46%|████▋     | 76/164 [03:27<04:10,  2.84s/it]Shard 0:  49%|████▉     | 80/164 [03:39<04:03,  2.90s/it]Shard 0:  51%|█████     | 84/164 [03:51<03:55,  2.95s/it]Shard 0:  54%|█████▎    | 88/164 [04:03<03:43,  2.95s/it]Shard 0:  56%|█████▌    | 92/164 [04:14<03:30,  2.93s/it]Shard 0:  59%|█████▊    | 96/164 [04:27<03:22,  2.98s/it]Shard 0:  61%|██████    | 100/164 [04:38<03:05,  2.90s/it]Shard 0:  63%|██████▎   | 104/164 [04:49<02:50,  2.85s/it]Shard 0:  66%|██████▌   | 108/164 [05:00<02:40,  2.87s/it]Shard 0:  68%|██████▊   | 112/164 [05:12<02:30,  2.89s/it]Shard 0:  71%|███████   | 116/164 [05:24<02:20,  2.94s/it]Shard 0:  73%|███████▎  | 120/164 [05:35<02:06,  2.88s/it]Shard 0:  76%|███████▌  | 124/164 [05:47<01:54,  2.87s/it]Shard 0:  78%|███████▊  | 128/164 [05:59<01:44,  2.90s/it]Shard 0:  80%|████████  | 132/164 [06:11<01:35,  2.98s/it]Shard 0:  83%|████████▎ | 136/164 [06:22<01:20,  2.89s/it]Shard 0:  85%|████████▌ | 140/164 [06:32<01:07,  2.82s/it]Shard 0:  88%|████████▊ | 144/164 [06:44<00:56,  2.81s/it]Shard 0:  90%|█████████ | 148/164 [06:55<00:44,  2.79s/it]Shard 0:  93%|█████████▎| 152/164 [07:06<00:33,  2.80s/it]Shard 0:  95%|█████████▌| 156/164 [07:18<00:22,  2.85s/it]Shard 0:  98%|█████████▊| 160/164 [07:30<00:11,  2.89s/it]Shard 0: 100%|██████████| 164/164 [07:41<00:00,  2.87s/it]Shard 0: 100%|██████████| 164/164 [07:41<00:00,  2.81s/it]
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
+Generation length: 128
+Denoising steps per block: 32
+Number of blocks: 4
